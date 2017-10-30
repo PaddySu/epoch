@@ -194,9 +194,9 @@ mine_one_block(N) ->
     subscribe(N, block_created),
     rpc_call(N, aec_miner, resume, []),
     receive
-        {gproc_ps_event, block_created, Height} ->
+        {gproc_ps_event, block_created, Info} ->
             rpc_call(N, aec_miner, suspend, []),
-            ct:log("block created, height=~p", [Height]),
+            ct:log("block created, Info=~p", [Info]),
             ok
     after 20000 ->
             rpc_call(N, aec_miner, suspend, []),
@@ -223,12 +223,13 @@ proxy_loop(Subs) ->
                     From ! {Ref, ok},
                     proxy_loop([{From, Event}|Subs]);
                 false ->
-                    Res = (catch aec_sync:subscribe(Event)),
+                    Res = (catch aec_events:subscribe(Event)),
                     From ! {Ref, Res},
                     proxy_loop([{From, Event}|Subs])
             end;
         {From, Ref, {unsubscribe, Event}} ->
             From ! {Ref, ok},
+            catch aec_events:unsubscribe(Event),
             proxy_loop([S || S <- Subs,
                              S =/= {From, Event}]);
         {gproc_ps_event, Event, _} = Msg ->

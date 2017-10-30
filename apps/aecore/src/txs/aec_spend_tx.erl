@@ -4,6 +4,7 @@
 -export([new/2,
          check/3,
          process/3,
+         signers/1,
          serialize/1,
          deserialize/1,
          type/0]).
@@ -41,6 +42,10 @@ check(#spend_tx{recipient = RecipientPubkey} = SpendTx, Trees0, Height) ->
         {error, _Reason} = Error ->
             Error
     end.
+
+-spec signers(spend_tx()) -> [pubkey()].
+signers(#spend_tx{sender = SenderPubKey}) -> [SenderPubKey].
+
 
 -spec process(spend_tx(), trees(), height()) -> {ok, trees()}.
 process(#spend_tx{sender = SenderPubkey,

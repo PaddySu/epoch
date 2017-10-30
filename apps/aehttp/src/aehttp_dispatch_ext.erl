@@ -83,6 +83,10 @@ handle_request('GetBlockByHash' = _Method, Req, _Context) ->
             end
     end;
 
+handle_request('GetTxs', Req, _Context) ->
+    N = maps:get('N', Req, 30),
+    error(nyi);
+
 handle_request('PostBlock', Req, _Context) ->
     SerializedBlock = add_missing_to_genesis_block(maps:get('Block', Req)),
     {ok, Block} = aec_blocks:deserialize_from_map(SerializedBlock),
@@ -93,6 +97,19 @@ handle_request('PostBlock', Req, _Context) ->
     lager:debug("'PostBlock'; header hash: ~p", [HH]),
     ok = aec_miner:post_block(Block),
     {200, [], #{}};
+
+handle_request('PostTx', Req, _Context) ->
+    SerializedTx = maps:get('SignedTx', Req),
+    {ok, SignedTx} = aec_tx_sign:deserialize_from_binary(SerializedTx),
+    case aec_tx_pool:push(SignedTx, tx_received) of
+        ok ->
+            lager:debug("Successfully added tx to pool", []),
+            {200, [], #{}};
+        {error, _} = Error ->
+            %% not necessarily an error condition for the remote side
+            lager:debug("Error pushing tx to school: ~p", [Error]),
+            {200, [], #{}}
+    end;
 
 handle_request('GetAccountBalance', Req, _Context) ->
     Pubkey =
