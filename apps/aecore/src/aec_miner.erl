@@ -297,7 +297,7 @@ configure(cast, create_block_candidate, State) ->
         {error, Reason} ->
             epoch_mining:error("Creation of block candidate failed: ~p", [Reason]),
             {next_state, configure, State,
-             [{next_event, cast, create_block_candidate}]}
+             [candidate_event()]}
     end;
 configure(cast, bump_initial_cycle_nonce,
           #state{fetch_new_txs_from_pool = true,
@@ -311,7 +311,7 @@ configure(cast, bump_initial_cycle_nonce,
             epoch_mining:info("No new txs available; "
                               "continuing mining with bumped nonce"),
             InitialCycleNonce =
-                (InitialCycleNonce0 + CycleAttemptsCount) band 16#7fffffff,
+                (InitialCycleNonce0 + CycleAttemptsCount) band ?MAX_NONCE,
             {next_state, running,
              State#state{initial_cycle_nonce = InitialCycleNonce},
              [mine_event()]

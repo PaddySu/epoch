@@ -11,11 +11,12 @@
 -export([generate/5,
          verify/4]).
 
-
 -ifdef(TEST).
 -compile([export_all, nowarn_export_all]).
 -endif.
 
+
+-include("pow.hrl").
 -include("sha256.hrl").
 
 %%%=============================================================================
